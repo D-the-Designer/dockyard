@@ -1,0 +1,21 @@
+const { contextBridge, ipcRenderer } = require('electron');
+contextBridge.exposeInMainWorld('dockyard', {
+  getProjects:         ()     => ipcRenderer.invoke('get-projects'),
+  upsertProject:       (p)    => ipcRenderer.invoke('upsert-project', p),
+  deleteProject:       (id)   => ipcRenderer.invoke('delete-project', id),
+  getContainers:       (pid)  => ipcRenderer.invoke('get-containers', pid),
+  upsertContainer:     (c)    => ipcRenderer.invoke('upsert-container', c),
+  deleteContainer:     (d)    => ipcRenderer.invoke('delete-container', d),
+  getAssets:           (cid)  => ipcRenderer.invoke('get-assets', cid),
+  upsertAsset:         (a)    => ipcRenderer.invoke('upsert-asset', a),
+  deleteAsset:         (id)   => ipcRenderer.invoke('delete-asset', id),
+  setAssetState:       (d)    => ipcRenderer.invoke('set-asset-state', d),
+  importFilesDialog:   (d)    => ipcRenderer.invoke('import-files-dialog', d),
+  importDroppedFiles:  (d)    => ipcRenderer.invoke('import-dropped-files', d),
+  startDrag:           (d)    => ipcRenderer.send('start-drag', d),
+  openFile:            (fp)   => ipcRenderer.invoke('open-file', fp),
+  getDataDir:          ()     => ipcRenderer.invoke('get-data-dir'),
+  toggleAlwaysOnTop:   ()     => ipcRenderer.invoke('toggle-always-on-top'),
+  exportContainer:     (d)    => ipcRenderer.invoke('export-container', d),
+  importDockPackage:   (d)    => ipcRenderer.invoke('import-dock-package', d),
+});
