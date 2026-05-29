@@ -236,6 +236,37 @@ ipcMain.handle('export-container', async (_, { container, assets, project }) => 
   } catch(e) { console.error(e.message); return false; }
 });
 
+ipcMain.handle('regenerate-thumbnails', async (_, { containerId }) => {
+  try {
+    const sharp = require('sharp');
+    const assets = containerId
+      ? db.prepare('SELECT * FROM assets WHERE container_id=?').all(containerId)
+      : db.prepare('SELECT * FROM assets').all();
+    let count = 0;
+    for (const asset of assets) {
+      if (!asset.file_path || !fs.existsSync(asset.file_path)) continue;
+      if (!['image','vector'].includes(asset.type)) continue;
+      const thumbPath = path.join(THUMBS_DIR, `${asset.id}_thumb.png`);
+      try {
+        await sharp(asset.file_path)
+          .resize(200, 200, { fit: 'cover' })
+          .png()
+          .toFile(thumbPath);
+        db.prepare("UPDATE assets SET thumb_path=?, updated_at=datetime('now') WHERE id=?")
+          .run(thumbPath, asset.id);
+        count++;
+      } catch(e) {
+        console.warn('[THUMB] Failed for', asset.file_path, e.message);
+      }
+    }
+    console.log(`[THUMB] Regenerated ${count} thumbnails`);
+    return { count };
+  } catch(e) {
+    console.error('[THUMB] Regenerate error:', e.message);
+    return { count: 0, error: e.message };
+  }
+});
+
 ipcMain.handle('import-dock-package', async (_, { projectId }) => {
   const result = await dialog.showOpenDialog(mainWindow, { filters: [{ name: 'Dockyard Package', extensions: ['zip'] }], properties: ['openFile'] });
   if (result.canceled) return null;
